@@ -11,24 +11,70 @@ SCD Type 2 dimension**, a **13-check data-quality gate**, a **SQL serving layer 
 The input is a seeded **synthetic** dataset that deliberately contains the problems real event data
 has: duplicates, re-deliveries, late-arriving events, malformed records and heavy-tailed users.
 
-```
- raw JSONL (landing zone, 1 folder per ingest_date)
-        │  generator/generate.py  – 10.3M synthetic events, 30 days
-        ▼
- BRONZE  Parquet, partitioned by ingest_date      schema-enforced, raw values kept, immutable
-        │  pipeline/bronze.py
-        ▼
- SILVER  Parquet, partitioned by event_date       validate → quarantine → dedupe → type → sessionize
-        │  pipeline/silver.py                      incremental, late-data aware, idempotent
-        ├──► QUARANTINE  (rejected rows + reason, partitioned by ingest_date)
-        ▼
- GOLD    star schema + marts                       dim_user (SCD2), dim_product, dim_date,
-        │  pipeline/gold.py                        fact_events, fact_orders, agg_* marts
-        ▼
- DQ GATE 13 checks, fails the run on any error     pipeline/dq.py
-        ▼
- SERVE   DuckDB views over gold + analytics SQL    pipeline/warehouse.py, sql/analytics.sql
- REPORT  self-contained HTML dashboard             pipeline/report.py
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph INGEST["① Ingest"]
+        direction LR
+        GEN["Synthetic event generator<br/>generator/generate.py<br/>10.3M events · 30 days"]
+        RAW[("Raw JSONL landing zone<br/>1 folder per ingest_date<br/>2.16 GB")]
+        BRZ[("Bronze · pipeline/bronze.py<br/>Parquet, schema-enforced<br/>partitioned by ingest_date · 220 MB")]
+        GEN --> RAW --> BRZ
+    end
+
+    subgraph SILVER["② Silver · pipeline/silver.py  (incremental · idempotent)"]
+        direction LR
+        VAL["Validate<br/>5 rules"]
+        LATE["Late-data recompute<br/>−1 / +2 day lookback"]
+        DED["Deduplicate<br/>ROW_NUMBER by event_id"]
+        SES["Sessionize<br/>LAG + 30-min gap"]
+        SLV[("Silver events<br/>by event_date · 10.0M rows")]
+        VAL --> LATE --> DED --> SES --> SLV
+    end
+
+    QUA[("Quarantine<br/>122,670 rows + reason")]
+
+    subgraph GOLD["③ Gold · pipeline/gold.py  (star schema)"]
+        direction LR
+        DIM[("Dimensions<br/>dim_user (SCD Type 2)<br/>dim_product · dim_date")]
+        FACT[("Facts<br/>fact_events · fact_orders")]
+        MART[("Marts<br/>daily revenue · funnel · products")]
+        DIM -. "point-in-time join" .-> FACT --> MART
+    end
+
+    DQ{{"④ Data-quality gate · pipeline/dq.py<br/>13 checks · any error fails the run"}}
+
+    subgraph SERVE["⑤ Serve"]
+        direction LR
+        SQL["DuckDB SQL analytics<br/>sql/analytics.sql"]
+        DASH["HTML dashboard<br/>pipeline/report.py"]
+    end
+
+    BRZ --> VAL
+    VAL -. "invalid rows" .-> QUA
+    SLV --> FACT
+    GOLD --> DQ
+    DQ -- "0 errors" --> SERVE
+
+    classDef src fill:#1e2638,stroke:#93a3bf,color:#eaf0f8
+    classDef bronze fill:#3b2a1d,stroke:#d08b57,color:#f5e6da
+    classDef silver fill:#26303d,stroke:#c3ceda,color:#eef2f6
+    classDef gold fill:#3a3115,stroke:#f2c14e,color:#fbf1d4
+    classDef bad fill:#3a1f24,stroke:#f87171,color:#fde2e2
+    classDef gate fill:#173326,stroke:#4ade80,color:#dcfce7
+    classDef serve fill:#123433,stroke:#2dd4bf,color:#d5faf4
+    class GEN,RAW src
+    class BRZ bronze
+    class VAL,LATE,DED,SES,SLV silver
+    class DIM,FACT,MART gold
+    class QUA bad
+    class DQ gate
+    class SQL,DASH serve
+    style INGEST fill:transparent,stroke:#93a3bf,stroke-dasharray:4 4
+    style SILVER fill:transparent,stroke:#c3ceda,stroke-dasharray:4 4
+    style GOLD fill:transparent,stroke:#f2c14e,stroke-dasharray:4 4
+    style SERVE fill:transparent,stroke:#2dd4bf,stroke-dasharray:4 4
 ```
 
 ## Measured results (full 10M run)
