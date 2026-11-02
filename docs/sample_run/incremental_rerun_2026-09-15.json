@@ -1,0 +1,41 @@
+{
+  "bronze": {
+    "seconds": 50.87,
+    "rows": 10328778,
+    "partitions": 30,
+    "raw_bytes": 2164107744
+  },
+  "silver": {
+    "rows_in": 326438,
+    "quarantined": 3798,
+    "quarantine_by_reason": {
+      "INVALID_EVENT_TYPE": 641,
+      "NULL_USER": 962,
+      "BAD_TIMESTAMP": 643,
+      "NEGATIVE_PRICE": 952,
+      "UNKNOWN_PRODUCT": 600
+    },
+    "valid_in_window": 322640,
+    "affected_event_dates": 5,
+    "recomputed_rows": 1740975,
+    "duplicates_removed": 33870,
+    "silver_rows": 1707105,
+    "sessions": 380393,
+    "recon_window_ok": true,
+    "recon_silver_ok": true,
+    "seconds": 38.58
+  },
+  "gold": {
+    "dim_user_rows": 115000,
+    "fact_events_rows": 10008864,
+    "fact_orders_rows": 600394,
+    "agg_daily_revenue_rows": 33,
+    "seconds": 68.72
+  },
+  "dq": {
+    "seconds": 25.78,
+    "total_checks": 13,
+    "passed": 12,
+    "failed_errors": 0
+  }
+}

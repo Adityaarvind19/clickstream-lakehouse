@@ -1,0 +1,14 @@
+{
+  "raw_json_bytes": 2164107744,
+  "bronze_parquet_bytes": 221565800,
+  "silver_parquet_bytes": 211058738,
+  "gold_bytes": 278780507,
+  "query_7day_revenue_raw_json_ms": 567.7,
+  "query_7day_revenue_silver_parquet_ms": 20.5,
+  "query_1day_partition_pruned_ms": 7.2,
+  "query_1day_no_pruning_ms": 36.0,
+  "runs_per_query": 5,
+  "json_to_bronze_compression_x": 9.8,
+  "json_vs_parquet_query_speedup_x": 27.7,
+  "pruning_speedup_x": 5.0
+}

@@ -1,0 +1,126 @@
+{
+  "generated_at": "2026-11-02T11:26:43+00:00",
+  "total_checks": 13,
+  "passed": 12,
+  "failed_errors": 0,
+  "results": [
+    {
+      "check": "silver.event_id is unique",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "rows": 10008864,
+        "distinct": 10008864
+      }
+    },
+    {
+      "check": "silver key columns are not null",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "event_id": 0,
+        "event_ts": 0,
+        "user_id": 0,
+        "product_id": 0,
+        "session_id": 0
+      }
+    },
+    {
+      "check": "price >= 0 and quantity >= 1 on cart/purchase",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "bad_price": 0,
+        "bad_qty": 0
+      }
+    },
+    {
+      "check": "RI: fact_events.product_id in dim_product",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "orphans": 0
+      }
+    },
+    {
+      "check": "RI: fact_events resolves to a dim_user row (point-in-time)",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "unresolved": 0
+      }
+    },
+    {
+      "check": "dim_user SCD2: no overlapping validity ranges, exactly one current row/user",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "overlaps": 0,
+        "bad_current": 0
+      }
+    },
+    {
+      "check": "fact_orders rows == silver purchases",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "fact_orders": 600394,
+        "silver_purchases": 600394
+      }
+    },
+    {
+      "check": "mart reconciles to fact: sum(gross_revenue)",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "fact": 38935280.98,
+        "mart": 38935280.98
+      }
+    },
+    {
+      "check": "sessionization: max intra-session gap <= 30 min",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "max_gap_seconds": 1800
+      }
+    },
+    {
+      "check": "reconciliation: ingest rows == quarantined + valid",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "rows_in": 10328778,
+        "quarantined": 122670,
+        "valid_in_window": 10206108
+      }
+    },
+    {
+      "check": "reconciliation: silver rows == distinct valid event_ids",
+      "passed": true,
+      "severity": "error",
+      "detail": {
+        "recomputed_rows": 10206108,
+        "duplicates_removed": 197244,
+        "silver_rows": 10008864
+      }
+    },
+    {
+      "check": "volume: daily rows within +-50% of median",
+      "passed": true,
+      "severity": "warn",
+      "detail": {
+        "median": 317258,
+        "outliers": 0
+      }
+    },
+    {
+      "check": "refunds reference a known purchase",
+      "passed": false,
+      "severity": "warn",
+      "detail": {
+        "orphan_refunds": 246
+      }
+    }
+  ]
+}

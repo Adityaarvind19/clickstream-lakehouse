@@ -1,0 +1,26 @@
+{
+  "rolling_7d_net_revenue": {
+    "rows": 33,
+    "seconds": 0.01
+  },
+  "top3_products_per_category": {
+    "rows": 24,
+    "seconds": 0.015
+  },
+  "funnel_by_plan_tier": {
+    "rows": 3,
+    "seconds": 0.003
+  },
+  "plan_tier_point_in_time_vs_current": {
+    "rows": 6,
+    "seconds": 0.136
+  },
+  "weekend_vs_weekday": {
+    "rows": 2,
+    "seconds": 0.019
+  },
+  "refund_rate_by_category": {
+    "rows": 8,
+    "seconds": 0.02
+  }
+}
