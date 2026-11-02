@@ -1,6 +1,6 @@
 {
   "bronze": {
-    "seconds": 50.87,
+    "seconds": 24.16,
     "rows": 10328778,
     "partitions": 30,
     "raw_bytes": 2164107744
@@ -23,17 +23,17 @@
     "sessions": 2239625,
     "recon_window_ok": true,
     "recon_silver_ok": true,
-    "seconds": 170.47
+    "seconds": 83.07
   },
   "gold": {
     "dim_user_rows": 115000,
     "fact_events_rows": 10008864,
     "fact_orders_rows": 600394,
     "agg_daily_revenue_rows": 33,
-    "seconds": 68.72
+    "seconds": 35.04
   },
   "dq": {
-    "seconds": 25.78,
+    "seconds": 13.82,
     "total_checks": 13,
     "passed": 12,
     "failed_errors": 0

@@ -1,10 +1,12 @@
 # Clickstream Lakehouse
 
+[![ci](https://github.com/Adityaarvind19/clickstream-lakehouse/actions/workflows/ci.yml/badge.svg)](https://github.com/Adityaarvind19/clickstream-lakehouse/actions/workflows/ci.yml)
+
 An end-to-end, batch **ETL pipeline and data warehouse** for e-commerce clickstream data, built on
 **PySpark + Parquet** (medallion architecture: bronze → silver → gold), a **star schema with an
 SCD Type 2 dimension**, a **13-check data-quality gate**, a **SQL serving layer (DuckDB)** and an
-**HTML reporting dashboard**. It processes **10.3M events (2.16 GB raw JSON)** end to end on a
-2-core laptop-class machine.
+**HTML reporting dashboard**. It processes **10.3M events (2.16 GB raw JSON)** end to end in
+**2.6 minutes** on a MacBook Air (Apple M5, 16 GB), with Spark limited to 2 cores.
 
 The input is a seeded **synthetic** dataset that deliberately contains the problems real event data
 has: duplicates, re-deliveries, late-arriving events, malformed records and heavy-tailed users.
@@ -31,21 +33,28 @@ has: duplicates, re-deliveries, late-arriving events, malformed records and heav
 
 ## Measured results (full 10M run)
 
-All numbers come from `docs/sample_run/*.json` (local[2] Spark, 2 vCPU, 4 GB driver).
+Machine: MacBook Air, Apple M5, 16 GB RAM, Spark `local[2]` (2 cores), 4 GB driver, Python 3.14, OpenJDK 17.
+Every number below comes from the files in [`docs/results/`](docs/results/).
 
-| Metric | Value |
-|---|---|
-| Raw events ingested | **10,328,778** (2.16 GB JSONL, 30 daily partitions) |
-| Rows quarantined (5 rule types) | **122,670** (1.19%) |
-| Duplicates removed (exactly-once by `event_id`) | **197,244** |
-| Clean silver rows / sessions derived | **10,008,864** / **2,239,625** |
-| End-to-end runtime (bronze → gold → DQ) | **5 min 23 s** (~32K rows/s on 2 cores) |
-| Incremental re-run of one ingest day | **~63 s**, silver output bit-identical (same row count + checksum) |
-| Storage: raw JSON → bronze Parquet (Snappy) | **9.8× smaller** (2.16 GB → 222 MB) |
-| 7-day revenue query: raw JSON vs silver Parquet | **27.7× faster** (568 ms → 20.5 ms, median of 5) |
-| 1-day query: partition pruning vs no pruning | **5.0× faster** (36.0 ms → 7.2 ms) |
-| Data-quality gate | **13 checks**: 12 pass, 1 warning, 0 errors |
-| Tests | **5 pytest tests** incl. end-to-end idempotency + incremental re-run |
+![Dashboard from the 10M-event run](docs/results/dashboard.png)
+
+| Metric | Value | Evidence |
+|---|---|---|
+| Raw events ingested | **10,328,778** (2.16 GB JSONL, 30 daily partitions) | [`pipeline_metrics.json`](docs/results/pipeline_metrics.json) |
+| Rows quarantined (5 rule types) | **122,670** (1.19%) | [`pipeline_metrics.json`](docs/results/pipeline_metrics.json) |
+| Duplicates removed (exactly-once by `event_id`) | **197,244** | [`pipeline_metrics.json`](docs/results/pipeline_metrics.json) |
+| Clean silver rows / sessions derived | **10,008,864** / **2,239,625** | [`pipeline_metrics.json`](docs/results/pipeline_metrics.json) |
+| Pipeline runtime (bronze 24 s, silver 83 s, gold 35 s, DQ 14 s) | **156 s ≈ 2.6 min** (~66K rows/s) | [`pipeline_metrics.json`](docs/results/pipeline_metrics.json) |
+| Storage: raw JSON → bronze Parquet (Snappy) | **9.8× smaller** (2.16 GB → 220 MB) | [`benchmark.json`](docs/results/benchmark.json) |
+| 7-day revenue query: raw JSON vs silver Parquet | **17.9× faster** (302 ms → 16.9 ms, median of 5) | [`benchmark.json`](docs/results/benchmark.json) |
+| 1-day query: partition pruning vs no pruning | **5.0× faster** (31.2 ms → 6.3 ms) | [`benchmark.json`](docs/results/benchmark.json) |
+| Analytics SQL over gold (6 queries) | each **< 50 ms** | [`warehouse_queries.json`](docs/results/warehouse_queries.json) |
+| Data-quality gate | **13 checks**: 12 pass, 1 warning, 0 errors | [`dq_report.json`](docs/results/dq_report.json) |
+| Tests | **5 passed** (incl. end-to-end idempotency + incremental re-run) | [`test_output.txt`](docs/results/test_output.txt), CI badge above |
+
+Runtime is the sum of stage times and excludes Spark JVM start-up (a few seconds).
+Benchmarks depend on hardware: on a 2-core cloud VM the same run took 5.3 min and the JSON-vs-Parquet
+speedup was 27.7×, because slower JSON parsing widens the gap.
 
 ## Design decisions (the interview talking points)
 
@@ -143,7 +152,7 @@ pipeline/report.py        HTML dashboard
 sql/analytics.sql         window functions, top-N per group, funnel, SCD2 comparison
 sql/redshift_ddl.sql      reference Redshift DDL
 tests/test_pipeline.py    unit + end-to-end tests
-docs/sample_run/          metrics, DQ report and dashboard from the 10M run
+docs/results/             metrics, benchmarks, DQ report, tests and dashboard from the 10M run
 .github/workflows/ci.yml  GitHub Actions: install + pytest
 ```
 
